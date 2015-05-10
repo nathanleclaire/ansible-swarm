@@ -1,0 +1,31 @@
+---
+- name: Launch DO worker bees
+  hosts: localhost
+  connection: local
+  gather_facts: False
+
+  tasks:
+    - name: Spin up DO droplet
+      digital_ocean: >
+          state=present
+          command=droplet
+          name=workerbee{{ item }}
+          api_token={{ lookup('env', 'DIGITALOCEAN_ACCESS_TOKEN') }}
+          size_id=2gb
+          region_id=sfo1
+          image_id=ubuntu-14-10-x64
+          wait_timeout=500
+          ssh_key_ids=321070
+      register: worker_nodes
+      with_sequence: count=3
+    - name: Wait for SSH to come up
+      wait_for: host={{ item.droplet.ip_address }} port=22 delay=60 timeout=320 state=started
+      with_items: worker_nodes.results
+    - name: Add newly created server to docker-machine
+      command: >
+        docker-machine create -d generic
+        --generic-ip-address {{ item.droplet.ip_address }}
+        --swarm
+        --swarm-discovery token://{{ lookup('env', 'SWARM_TOKEN') }}
+        {{ item.droplet.name }}
+      with_items: worker_nodes.results
