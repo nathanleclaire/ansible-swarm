@@ -1,14 +1,18 @@
 ---
-- name: Kill created DigitalOcean droplet
-  hosts: localhost
+- name: Kill created DigitalOcean droplets
+  hosts: queenbee:workerbee*
   connection: local
   gather_facts: True
 
   tasks:
-    - name: Destroy a created DigitalOcean droplet
+    - name: Dump all vars
+      action: template src=dumpall.j2 dest=./ansible.all
+    - name: Destroy created DigitalOcean droplets
       digital_ocean: >
-          id={{ lookup('env', 'DROPLET_ID') }}
           state=deleted
           command=droplet
-          name=masternode
+          id={{ hostvars[inventory_hostname].do_id }}
           api_token={{ lookup('env', 'DIGITALOCEAN_ACCESS_TOKEN') }}
+    - name: Remove Docker Machine refs locally
+      command:
+        docker-machine rm {{ hostvars[inventory_hostname].do_name }}

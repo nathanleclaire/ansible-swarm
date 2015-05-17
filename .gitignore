@@ -1,2 +1,4 @@
 *.swp
 inventory.ini
+digital_ocean.ini
+ansible.all

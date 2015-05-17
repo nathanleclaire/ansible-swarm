@@ -1,0 +1,21 @@
+---
+- name: Turn on UFW
+  ufw: >
+    state=enabled
+    policy=allow
+- name: Allow SSH access on the instance
+  ufw: >
+    rule=allow
+    name=OpenSSH
+- name: Open Docker daemon and swarm ports
+  ufw: >
+    rule=allow
+    port={{ item }}
+    proto=tcp
+  with_items:
+    - 80
+    - 2376
+    - 3376
+- name: Set to deny incoming requests by default
+  ufw: >
+    default=deny
